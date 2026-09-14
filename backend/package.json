@@ -3,28 +3,33 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "node --watch src/index.ts",
+    "dev": "node --watch --import tsx src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
+    "migrate": "node --import tsx src/db/migrate.ts",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
   },
   "dependencies": {
+    "dotenv": "^17.4.2",
     "express": "^5.0.0",
     "pg": "^8.13.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
+    "@types/jest": "^29.5.14",
     "@types/node": "^22.0.0",
     "@types/pg": "^8.11.0",
     "jest": "^29.7.0",
-    "@types/jest": "^29.5.14",
     "ts-jest": "^29.2.0",
+    "tsx": "^4.23.13",
     "typescript": "~5.7.0"
   },
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "node",
-    "extensionsToTreatAsEsm": [".ts"],
+    "extensionsToTreatAsEsm": [
+      ".ts"
+    ],
     "moduleNameMapper": {
       "^(\\.{1,2}/.*)\\.js$": "$1"
     },
