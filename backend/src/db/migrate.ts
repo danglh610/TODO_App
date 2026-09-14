@@ -4,7 +4,7 @@
 import { config } from 'dotenv';
 import { readdir, readFile } from 'fs/promises';
 import { join } from 'path';
-import { query } from './connection.js';
+import { query } from './connection';
 
 // Load environment variables
 config();
@@ -75,7 +75,7 @@ async function executeMigration(filename: string): Promise<void> {
   console.log(`[Migration] Running: ${filename}`);
 
   // Execute in transaction
-  const client = await (await import('./connection.js')).getClient();
+  const client = await (await import('./connection')).getClient();
   try {
     await client.query('BEGIN');
     await client.query(sql);
@@ -124,9 +124,3 @@ export async function runMigrations(): Promise<void> {
 
   console.log(`[Migration] All ${pending.length} migration(s) completed successfully!`);
 }
-
-// Run migrations if this file is executed directly
-runMigrations().catch((error) => {
-  console.error('[Migration] Failed:', error);
-  process.exit(1);
-});

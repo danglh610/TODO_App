@@ -1,9 +1,7 @@
 // src/db/connection.ts
 // Database connection pool using pg library
 
-import pg from 'pg';
-
-const { Pool } = pg;
+import pg, { Pool } from 'pg';
 
 let pool: Pool | null = null;
 
@@ -26,7 +24,7 @@ function getPool(): Pool {
       console.log('[DB] New client connected');
     });
 
-    pool.on('error', (err) => {
+    pool.on('error', (err: Error) => {
       console.error('[DB] Unexpected error on idle client', err);
     });
   }
@@ -66,5 +64,3 @@ export async function closePool(): Promise<void> {
   }
   console.log('[DB] Pool closed');
 }
-
-export { pool };

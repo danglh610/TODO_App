@@ -3,8 +3,9 @@
 
 import { config } from 'dotenv';
 import express from 'express';
-import { testConnection, closePool } from './db/connection.js';
-import { runMigrations } from './db/migrate.js';
+import { testConnection, closePool } from './db/connection';
+import { runMigrations } from './db/migrate';
+import { dutiesRouter } from './routes/index';
 
 // Load environment variables
 config();
@@ -17,7 +18,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 
 // Health check endpoint
-app.get('/health', async (req, res) => {
+app.get('/health', async (_req, res) => {
   const dbOk = await testConnection();
   res.json({
     status: dbOk ? 'healthy' : 'unhealthy',
@@ -27,7 +28,7 @@ app.get('/health', async (req, res) => {
 });
 
 // Basic route
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
   res.json({
     message: 'TODO App API',
     version: '1.0.0',
@@ -37,6 +38,9 @@ app.get('/', (req, res) => {
     }
   });
 });
+
+// API Routes
+app.use('/api/duties', dutiesRouter);
 
 // Graceful shutdown
 async function shutdown(): Promise<void> {
