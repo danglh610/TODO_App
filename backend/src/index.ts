@@ -6,6 +6,7 @@ import express from 'express';
 import { testConnection, closePool } from './db/connection';
 import { runMigrations } from './db/migrate';
 import { dutiesRouter } from './routes/index';
+import { notFoundHandler, errorHandler } from './middleware';
 
 // Load environment variables
 config();
@@ -41,6 +42,12 @@ app.get('/', (_req, res) => {
 
 // API Routes
 app.use('/api/duties', dutiesRouter);
+
+// 404 handler - must be after all routes
+app.use(notFoundHandler);
+
+// Global error handler - must be last
+app.use(errorHandler);
 
 // Graceful shutdown
 async function shutdown(): Promise<void> {

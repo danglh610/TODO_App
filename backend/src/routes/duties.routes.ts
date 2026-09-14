@@ -12,91 +12,275 @@ const VALID_STATUSES: DutyStatus[] = ['pending', 'in_progress', 'completed', 'ca
 const VALID_PRIORITIES: DutyPriority[] = ['low', 'medium', 'high', 'urgent'];
 const VALID_SORT_FIELDS = ['created_at', 'updated_at', 'priority', 'due_date'] as const;
 
-/**
- * Parse query parameters for list endpoint
- */
-function parseQueryParams(query: Request['query']): { valid: boolean; params?: DutyQueryParams; error?: string } {
-  const params: DutyQueryParams = {};
+// ============================================
+// GET /api/duties - Get paginated and filtered duties
+// ============================================
+router.get('/', async (req: Request, res: Response) => {
+  try {
+    // Parse & validate query parameters
+    const params: DutyQueryParams = {};
+    const errors: string[] = [];
 
-  // Parse pagination
-  if (query.page !== undefined) {
-    const page = parseInt(String(query.page), 10);
-    if (isNaN(page) || page < 1) {
-      return { valid: false, error: 'page must be a positive integer' };
+    // Parse page
+    if (req.query.page !== undefined) {
+      const page = parseInt(String(req.query.page), 10);
+      if (isNaN(page) || page < 1) {
+        errors.push('page must be a positive integer');
+      } else {
+        params.page = page;
+      }
     }
-    params.page = page;
-  }
 
-  if (query.limit !== undefined) {
-    const limit = parseInt(String(query.limit), 10);
-    if (isNaN(limit) || limit < 1) {
-      return { valid: false, error: 'limit must be a positive integer' };
+    // Parse limit
+    if (req.query.limit !== undefined) {
+      const limit = parseInt(String(req.query.limit), 10);
+      if (isNaN(limit) || limit < 1) {
+        errors.push('limit must be a positive integer');
+      } else {
+        params.limit = limit;
+      }
     }
-    params.limit = limit;
-  }
 
-  // Parse status filter
-  if (query.status !== undefined) {
-    const status = String(query.status) as DutyStatus;
-    if (!VALID_STATUSES.includes(status)) {
-      return { valid: false, error: `status must be one of: ${VALID_STATUSES.join(', ')}` };
+    // Parse status filter
+    if (req.query.status !== undefined) {
+      const status = String(req.query.status) as DutyStatus;
+      if (!VALID_STATUSES.includes(status)) {
+        errors.push(`status must be one of: ${VALID_STATUSES.join(', ')}`);
+      } else {
+        params.status = status;
+      }
     }
-    params.status = status;
-  }
 
-  // Parse priority filter
-  if (query.priority !== undefined) {
-    const priority = String(query.priority) as DutyPriority;
-    if (!VALID_PRIORITIES.includes(priority)) {
-      return { valid: false, error: `priority must be one of: ${VALID_PRIORITIES.join(', ')}` };
+    // Parse priority filter
+    if (req.query.priority !== undefined) {
+      const priority = String(req.query.priority) as DutyPriority;
+      if (!VALID_PRIORITIES.includes(priority)) {
+        errors.push(`priority must be one of: ${VALID_PRIORITIES.join(', ')}`);
+      } else {
+        params.priority = priority;
+      }
     }
-    params.priority = priority;
-  }
 
-  // Parse completed filter
-  if (query.completed !== undefined) {
-    const completed = String(query.completed).toLowerCase();
-    if (completed === 'true' || completed === '1') {
-      params.completed = true;
-    } else if (completed === 'false' || completed === '0') {
-      params.completed = false;
-    } else {
-      return { valid: false, error: 'completed must be true/false or 1/0' };
+    // Parse completed filter
+    if (req.query.completed !== undefined) {
+      const completed = String(req.query.completed).toLowerCase();
+      if (completed === 'true' || completed === '1') {
+        params.completed = true;
+      } else if (completed === 'false' || completed === '0') {
+        params.completed = false;
+      } else {
+        errors.push('completed must be true/false or 1/0');
+      }
     }
-  }
 
-  // Parse search query
-  if (query.search !== undefined) {
-    const search = String(query.search).trim();
-    if (search.length > 0) {
-      params.search = search;
+    // Parse search query
+    if (req.query.search !== undefined) {
+      const search = String(req.query.search).trim();
+      if (search.length > 0) {
+        params.search = search;
+      }
     }
-  }
 
-  // Parse sort field
-  if (query.sort_by !== undefined) {
-    const sortBy = String(query.sort_by).toLowerCase();
-    if (!VALID_SORT_FIELDS.includes(sortBy as typeof VALID_SORT_FIELDS[number])) {
-      return { valid: false, error: `sort_by must be one of: ${VALID_SORT_FIELDS.join(', ')}` };
+    // Parse sort field
+    if (req.query.sort_by !== undefined) {
+      const sortBy = String(req.query.sort_by).toLowerCase();
+      if (!VALID_SORT_FIELDS.includes(sortBy as typeof VALID_SORT_FIELDS[number])) {
+        errors.push(`sort_by must be one of: ${VALID_SORT_FIELDS.join(', ')}`);
+      } else {
+        params.sort_by = sortBy as DutyQueryParams['sort_by'];
+      }
     }
-    params.sort_by = sortBy as DutyQueryParams['sort_by'];
-  }
 
-  // Parse sort order
-  if (query.sort_order !== undefined) {
-    const sortOrder = String(query.sort_order).toLowerCase();
-    if (sortOrder !== 'asc' && sortOrder !== 'desc') {
-      return { valid: false, error: 'sort_order must be asc or desc' };
+    // Parse sort order
+    if (req.query.sort_order !== undefined) {
+      const sortOrder = String(req.query.sort_order).toLowerCase();
+      if (sortOrder !== 'asc' && sortOrder !== 'desc') {
+        errors.push('sort_order must be asc or desc');
+      } else {
+        params.sort_order = sortOrder as 'asc' | 'desc';
+      }
     }
-    params.sort_order = sortOrder as 'asc' | 'desc';
+
+    // Return validation errors directly
+    if (errors.length > 0) {
+      res.status(400).json({
+        success: false,
+        message: errors[0],
+        errors
+      });
+      return;
+    }
+
+    const result = await dutiesService.getDuties(params);
+    res.json(result);
+  } catch (error) {
+    console.error('[Route] GET /api/duties error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
   }
+});
 
-  return { valid: true, params };
-}
+// ============================================
+// GET /api/duties/:id - Get a single duty
+// ============================================
+router.get('/:id', async (req: Request, res: Response) => {
+  try {
+    // Parse & validate ID
+    const idParam = req.params.id as string;
+    const id = parseInt(idParam, 10);
+    if (isNaN(id) || id <= 0) {
+      res.status(400).json({
+        success: false,
+        message: 'Invalid ID: must be a positive integer'
+      });
+      return;
+    }
 
-/**
- * Validate CreateDutyInput
- */
+    const duty = await dutiesService.getDutyById(id);
+    if (!duty) {
+      res.status(404).json({
+        success: false,
+        message: `Duty with ID ${id} not found`
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      data: duty
+    });
+  } catch (error) {
+    console.error(`[Route] GET /api/duties/${req.params.id} error:`, error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// ============================================
+// POST /api/duties - Create a new duty
+// ============================================
+router.post('/', async (req: Request, res: Response) => {
+  try {
+    // Validate input
+    const validation = validateCreateInput(req.body);
+    if (!validation.valid) {
+      res.status(400).json({
+        success: false,
+        message: validation.error
+      });
+      return;
+    }
+
+    const duty = await dutiesService.createDuty(validation.data!);
+    res.status(201).json({
+      success: true,
+      data: duty,
+      message: 'Duty created successfully'
+    });
+  } catch (error) {
+    console.error('[Route] POST /api/duties error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// ============================================
+// PUT /api/duties/:id - Update an existing duty
+// ============================================
+router.put('/:id', async (req: Request, res: Response) => {
+  try {
+    // Parse & validate ID
+    const idParam = req.params.id as string;
+    const id = parseInt(idParam, 10);
+    if (isNaN(id) || id <= 0) {
+      res.status(400).json({
+        success: false,
+        message: 'Invalid ID: must be a positive integer'
+      });
+      return;
+    }
+
+    // Validate body
+    const validation = validateUpdateInput(req.body);
+    if (!validation.valid) {
+      res.status(400).json({
+        success: false,
+        message: validation.error
+      });
+      return;
+    }
+
+    const duty = await dutiesService.updateDuty(id, validation.data!);
+    if (!duty) {
+      res.status(404).json({
+        success: false,
+        message: `Duty with ID ${id} not found`
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      data: duty,
+      message: 'Duty updated successfully'
+    });
+  } catch (error) {
+    console.error(`[Route] PUT /api/duties/${req.params.id} error:`, error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// ============================================
+// DELETE /api/duties/:id - Soft delete a duty
+// ============================================
+router.delete('/:id', async (req: Request, res: Response) => {
+  try {
+    // Parse & validate ID
+    const idParam = req.params.id as string;
+    const id = parseInt(idParam, 10);
+    if (isNaN(id) || id <= 0) {
+      res.status(400).json({
+        success: false,
+        message: 'Invalid ID: must be a positive integer'
+      });
+      return;
+    }
+
+    const deleted = await dutiesService.deleteDuty(id);
+    if (!deleted) {
+      res.status(404).json({
+        success: false,
+        message: `Duty with ID ${id} not found`
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      message: `Duty with ID ${id} deleted successfully`
+    });
+  } catch (error) {
+    console.error(`[Route] DELETE /api/duties/${req.params.id} error:`, error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// ============================================
+// Validation helpers
+// ============================================
+
 function validateCreateInput(body: unknown): { valid: boolean; error?: string; data?: CreateDutyInput } {
   if (!body || typeof body !== 'object') {
     return { valid: false, error: 'Request body is required' };
@@ -136,7 +320,6 @@ function validateCreateInput(body: unknown): { valid: boolean; error?: string; d
       if (typeof value !== 'string') {
         return { valid: false, error: `${field} must be a date string (YYYY-MM-DD)` };
       }
-      // Basic date format validation (YYYY-MM-DD)
       const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
       if (!dateRegex.test(value)) {
         return { valid: false, error: `${field} must be in YYYY-MM-DD format` };
@@ -158,9 +341,6 @@ function validateCreateInput(body: unknown): { valid: boolean; error?: string; d
   };
 }
 
-/**
- * Validate UpdateDutyInput
- */
 function validateUpdateInput(body: unknown): { valid: boolean; error?: string; data?: UpdateDutyInput } {
   if (!body || typeof body !== 'object') {
     return { valid: false, error: 'Request body is required' };
@@ -171,7 +351,7 @@ function validateUpdateInput(body: unknown): { valid: boolean; error?: string; d
   // At least one field must be provided
   const allowedFields = ['title', 'description', 'status', 'priority', 'start_date', 'end_date', 'notes', 'completed'];
   const hasValidField = allowedFields.some(field => field in data);
-  
+
   if (!hasValidField) {
     return { valid: false, error: 'At least one field must be provided for update' };
   }
@@ -242,182 +422,5 @@ function validateUpdateInput(body: unknown): { valid: boolean; error?: string; d
 
   return { valid: true, data: result };
 }
-
-/**
- * Parse ID from request params
- */
-function parseId(param: string): { valid: boolean; id?: number; error?: string } {
-  const parsed = parseInt(param, 10);
-  if (isNaN(parsed) || parsed <= 0) {
-    return { valid: false, error: 'Invalid ID: must be a positive integer' };
-  }
-  return { valid: true, id: parsed };
-}
-
-// ============================================
-// GET /api/duties - Get paginated and filtered duties
-// ============================================
-router.get('/', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    // Parse query parameters
-    const queryResult = parseQueryParams(req.query);
-    if (!queryResult.valid) {
-      res.status(400).json({
-        success: false,
-        error: queryResult.error
-      });
-      return;
-    }
-
-    console.log('[Route] GET /api/duties', req.query);
-    const result = await dutiesService.getDuties(queryResult.params!);
-    
-    res.json(result);
-  } catch (error) {
-    next(error);
-  }
-});
-
-// ============================================
-// GET /api/duties/:id - Get a single duty
-// ============================================
-router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const idParam = req.params.id as string;
-    const idCheck = parseId(idParam);
-    if (!idCheck.valid) {
-      res.status(400).json({
-        success: false,
-        error: idCheck.error
-      });
-      return;
-    }
-
-    console.log(`[Route] GET /api/duties/${idCheck.id}`);
-    const duty = await dutiesService.getDutyById(idCheck.id!);
-
-    if (!duty) {
-      res.status(404).json({
-        success: false,
-        error: `Duty with ID ${idCheck.id} not found`
-      });
-      return;
-    }
-
-    res.json({
-      success: true,
-      data: duty
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// ============================================
-// POST /api/duties - Create a new duty
-// ============================================
-router.post('/', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const validation = validateCreateInput(req.body);
-    if (!validation.valid) {
-      res.status(400).json({
-        success: false,
-        error: validation.error
-      });
-      return;
-    }
-
-    console.log('[Route] POST /api/duties');
-    const duty = await dutiesService.createDuty(validation.data!);
-
-    res.status(201).json({
-      success: true,
-      data: duty,
-      message: 'Duty created successfully'
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// ============================================
-// PUT /api/duties/:id - Update an existing duty
-// ============================================
-router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const idParam = req.params.id as string;
-    const idCheck = parseId(idParam);
-    if (!idCheck.valid) {
-      res.status(400).json({
-        success: false,
-        error: idCheck.error
-      });
-      return;
-    }
-
-    const validation = validateUpdateInput(req.body);
-    if (!validation.valid) {
-      res.status(400).json({
-        success: false,
-        error: validation.error
-      });
-      return;
-    }
-
-    console.log(`[Route] PUT /api/duties/${idCheck.id}`);
-    const duty = await dutiesService.updateDuty(idCheck.id!, validation.data!);
-
-    if (!duty) {
-      res.status(404).json({
-        success: false,
-        error: `Duty with ID ${idCheck.id} not found`
-      });
-      return;
-    }
-
-    res.json({
-      success: true,
-      data: duty,
-      message: 'Duty updated successfully'
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// ============================================
-// DELETE /api/duties/:id - Soft delete a duty
-// ============================================
-router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const idParam = req.params.id as string;
-    const idCheck = parseId(idParam);
-    if (!idCheck.valid) {
-      res.status(400).json({
-        success: false,
-        error: idCheck.error
-      });
-      return;
-    }
-
-    console.log(`[Route] DELETE /api/duties/${idCheck.id}`);
-    const deleted = await dutiesService.deleteDuty(idCheck.id!);
-
-    if (!deleted) {
-      res.status(404).json({
-        success: false,
-        error: `Duty with ID ${idCheck.id} not found`
-      });
-      return;
-    }
-
-    res.json({
-      success: true,
-      message: `Duty with ID ${idCheck.id} deleted successfully`
-    });
-  } catch (error) {
-    next(error);
-  }
-});
 
 export default router;
