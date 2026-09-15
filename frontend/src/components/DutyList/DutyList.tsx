@@ -29,7 +29,7 @@ function DutyListInner({ initialStatus, initialPriority }: { initialStatus?: Dut
   const [searchTerm, setSearchTerm] = useState('');
   const [loadingItemId, setLoadingItemId] = useState<number | null>(null);
 
-  const fetchDuties = useCallback(async (page: number = 1) => {
+  const fetchDuties = useCallback(async (page: number = 1, searchOverride?: string) => {
     setLoading(true);
     setError(null);
     try {
@@ -38,7 +38,7 @@ function DutyListInner({ initialStatus, initialPriority }: { initialStatus?: Dut
         limit: PAGE_SIZE,
         status: statusFilter || undefined,
         priority: priorityFilter || undefined,
-        search: searchTerm || undefined
+        search: searchOverride !== undefined ? searchOverride : (searchTerm || undefined)
       });
       if (result.success && result.data) {
         setDuties(result.data);
@@ -91,7 +91,7 @@ function DutyListInner({ initialStatus, initialPriority }: { initialStatus?: Dut
     if (e.key === 'Enter') {
       setSearchTerm(searchQuery);
       setCurrentPage(1);
-      fetchDuties(1);
+      fetchDuties(1, searchQuery);
     }
   }, [searchQuery, fetchDuties]);
 

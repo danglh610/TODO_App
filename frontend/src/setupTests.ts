@@ -15,3 +15,10 @@ jest.mock('./config/api', () => ({
 // Mock fetch
 // @ts-expect-error - Jest mock
 globalThis.fetch = jest.fn();
+
+// Mock TextEncoder for react-router-dom
+global.TextEncoder = class TextEncoder {
+  encode(input: string) {
+    return new Uint8Array([]);
+  }
+};

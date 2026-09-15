@@ -10,6 +10,7 @@ export const DeleteOutlined = (props: any) => <span {...props}>Delete</span>;
 export const CalendarOutlined = (props: any) => <span {...props}>Calendar</span>;
 export const SearchOutlined = (props: any) => <span {...props}>Search</span>;
 export const ReloadOutlined = (props: any) => <span {...props}>Reload</span>;
+export const ArrowLeftOutlined = (props: any) => <span {...props}>ArrowLeft</span>;
 
 export default {
   PlusOutlined,
