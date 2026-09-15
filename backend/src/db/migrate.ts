@@ -5,6 +5,7 @@ import { config } from 'dotenv';
 import { readdir, readFile } from 'fs/promises';
 import { join } from 'path';
 import { query } from './connection';
+import { logger } from '../utils/logger';
 
 // Load environment variables
 config();
@@ -29,8 +30,8 @@ async function ensureMigrationsTable(): Promise<void> {
         executed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    logger.info('Migration', '_migrations table ready');
   }
-  console.log('[Migration] _migrations table ready');
 }
 
 /**
@@ -72,7 +73,7 @@ async function readMigrationFile(filename: string): Promise<string> {
 async function executeMigration(filename: string): Promise<void> {
   const sql = await readMigrationFile(filename);
 
-  console.log(`[Migration] Running: ${filename}`);
+  logger.info('Migration', `Running: ${filename}`);
 
   // Execute in transaction
   const client = await (await import('./connection')).getClient();
@@ -84,10 +85,10 @@ async function executeMigration(filename: string): Promise<void> {
       [filename]
     );
     await client.query('COMMIT');
-    console.log(`[Migration] Completed: ${filename}`);
+    logger.info('Migration', `Completed: ${filename}`);
   } catch (error) {
     await client.query('ROLLBACK');
-    console.error(`[Migration] Failed: ${filename}`, error);
+    logger.error('Migration', `Failed: ${filename}`, { error: error instanceof Error ? error.message : error });
     throw error;
   } finally {
     client.release();
@@ -98,7 +99,7 @@ async function executeMigration(filename: string): Promise<void> {
  * Run all pending migrations
  */
 export async function runMigrations(): Promise<void> {
-  console.log('[Migration] Starting...\n');
+  logger.info('Migration', 'Starting...');
 
   // Ensure migrations table exists
   await ensureMigrationsTable();
@@ -111,16 +112,16 @@ export async function runMigrations(): Promise<void> {
   const pending = files.filter((file) => !executed.includes(file));
 
   if (pending.length === 0) {
-    console.log('[Migration] No pending migrations. Database is up to date.\n');
+    logger.info('Migration', 'No pending migrations. Database is up to date.');
     return;
   }
 
-  console.log(`[Migration] Found ${pending.length} pending migration(s):\n`);
+  logger.info('Migration', `Found ${pending.length} pending migration(s)`);
 
   // Execute pending migrations
   for (const filename of pending) {
     await executeMigration(filename);
   }
 
-  console.log(`[Migration] All ${pending.length} migration(s) completed successfully!`);
+  logger.info('Migration', `All ${pending.length} migration(s) completed successfully!`);
 }

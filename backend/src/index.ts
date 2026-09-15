@@ -8,6 +8,7 @@ import { testConnection, closePool } from './db/connection';
 import { runMigrations } from './db/migrate';
 import { dutiesRouter } from './routes/index';
 import { notFoundHandler, errorHandler } from './middleware';
+import { logger, requestLogger } from './utils/logger';
 
 // Load environment variables
 config();
@@ -19,6 +20,7 @@ const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
 // Middleware
 app.use(express.json());
+app.use(requestLogger);
 
 // CORS Configuration - Allow frontend to access API
 app.use(cors({
@@ -65,8 +67,9 @@ app.use(errorHandler);
 
 // Graceful shutdown
 async function shutdown(): Promise<void> {
-  console.log('[Server] Shutting down...');
+  logger.info('Server', 'Shutting down gracefully...');
   await closePool();
+  logger.info('Server', 'Shutdown complete');
   process.exit(0);
 }
 
@@ -75,29 +78,35 @@ process.on('SIGINT', shutdown);
 
 // Start server
 async function start(): Promise<void> {
-  console.log('[Server] Starting TODO App Backend...\n');
+  logger.info('Server', 'Starting TODO App Backend...');
 
   // Test database connection
   const dbConnected = await testConnection();
   if (!dbConnected) {
-    console.error('[Server] Cannot start: Database connection failed');
-    console.error('Please check your database settings in .env');
+    logger.error('Server', 'Cannot start: Database connection failed', { 
+      hint: 'Check your database settings in .env' 
+    });
     process.exit(1);
   }
+  logger.info('Database', 'Connection established');
 
   // Run migrations
-  console.log('');
   await runMigrations();
 
   // Start HTTP server
-  app.listen(PORT, () => {
-    console.log(`[Server] Running at http://localhost:${PORT}`);
-    console.log(`[Server] API available at http://localhost:${PORT}/api`);
+  const server = app.listen(PORT, () => {
+    logger.info('Server', `Running at http://localhost:${PORT}`);
+    logger.info('Server', `API available at http://localhost:${PORT}/api`);
+  });
+
+  // Handle server errors
+  server.on('error', (error: NodeJS.ErrnoException) => {
+    logger.error('Server', 'HTTP server error', { code: error.code, message: error.message });
   });
 }
 
 start().catch((error) => {
-  console.error('[Server] Failed to start:', error);
+  logger.error('Server', 'Failed to start', { error: error.message });
   process.exit(1);
 });
 
