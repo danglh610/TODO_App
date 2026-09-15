@@ -37,6 +37,20 @@ Create a `.env` file in the `src/frontend` directory:
 VITE_API_BASE_URL=http://localhost:3000
 ```
 
+## Screenshots
+
+### 1. Duty List
+![Duty List](docs/screenshots/list_page.png)
+
+### 2. Create New Duty
+![New Duty](docs/screenshots/new_duty.png)
+
+### 3. Edit Duty
+![Edit Duty](docs/screenshots/edit_duty.png)
+
+### 4. Filters
+![Filters](docs/screenshots/filters.png)
+
 ## Features
 
 - ✅ **View duties** - Paginated list with status indicators
