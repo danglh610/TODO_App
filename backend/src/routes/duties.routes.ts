@@ -298,18 +298,20 @@ function validateCreateInput(body: unknown): { valid: boolean; error?: string; d
     return { valid: false, error: 'Title must be 255 characters or less' };
   }
 
-  // Validate optional status
-  if (status !== undefined) {
-    if (!VALID_STATUSES.includes(status as DutyStatus)) {
-      return { valid: false, error: `Status must be one of: ${VALID_STATUSES.join(', ')}` };
-    }
+  // Status is required
+  if (!status) {
+    return { valid: false, error: 'Status is required' };
+  }
+  if (!VALID_STATUSES.includes(status as DutyStatus)) {
+    return { valid: false, error: `Status must be one of: ${VALID_STATUSES.join(', ')}` };
   }
 
-  // Validate optional priority
-  if (priority !== undefined) {
-    if (!VALID_PRIORITIES.includes(priority as DutyPriority)) {
-      return { valid: false, error: `Priority must be one of: ${VALID_PRIORITIES.join(', ')}` };
-    }
+  // Priority is required
+  if (!priority) {
+    return { valid: false, error: 'Priority is required' };
+  }
+  if (!VALID_PRIORITIES.includes(priority as DutyPriority)) {
+    return { valid: false, error: `Priority must be one of: ${VALID_PRIORITIES.join(', ')}` };
   }
 
   // Validate date formats if provided
@@ -324,6 +326,13 @@ function validateCreateInput(body: unknown): { valid: boolean; error?: string; d
       if (!dateRegex.test(value)) {
         return { valid: false, error: `${field} must be in YYYY-MM-DD format` };
       }
+    }
+  }
+
+  // Validate date range (end_date >= start_date)
+  if (start_date && end_date && typeof start_date === 'string' && typeof end_date === 'string') {
+    if (end_date < start_date) {
+      return { valid: false, error: 'End date must be on or after start date' };
     }
   }
 
@@ -376,6 +385,9 @@ function validateUpdateInput(body: unknown): { valid: boolean; error?: string; d
 
   // Validate status if provided
   if ('status' in data) {
+    if (!data.status) {
+      return { valid: false, error: 'Status is required' };
+    }
     if (!VALID_STATUSES.includes(data.status as DutyStatus)) {
       return { valid: false, error: `Status must be one of: ${VALID_STATUSES.join(', ')}` };
     }
@@ -384,6 +396,9 @@ function validateUpdateInput(body: unknown): { valid: boolean; error?: string; d
 
   // Validate priority if provided
   if ('priority' in data) {
+    if (!data.priority) {
+      return { valid: false, error: 'Priority is required' };
+    }
     if (!VALID_PRIORITIES.includes(data.priority as DutyPriority)) {
       return { valid: false, error: `Priority must be one of: ${VALID_PRIORITIES.join(', ')}` };
     }
@@ -404,6 +419,17 @@ function validateUpdateInput(body: unknown): { valid: boolean; error?: string; d
         }
       }
       result[field] = data[field] as UpdateDutyInput[typeof field];
+    }
+  }
+
+  // Validate date range (end_date >= start_date) if both are provided
+  const startDateVal = 'start_date' in data ? data.start_date : undefined;
+  const endDateVal = 'end_date' in data ? data.end_date : undefined;
+  if (startDateVal && endDateVal && startDateVal !== null && endDateVal !== null) {
+    if (typeof startDateVal === 'string' && typeof endDateVal === 'string') {
+      if (endDateVal < startDateVal) {
+        return { valid: false, error: 'End date must be on or after start date' };
+      }
     }
   }
 

@@ -276,8 +276,7 @@ export async function updateDuty(id: number, input: UpdateDutyInput): Promise<Du
     updates.push(`completed = $${paramIndex++}`);
     values.push(input.completed);
     // Auto-set completed_at timestamp
-    updates.push(`completed_at = $${paramIndex++}`);
-    values.push(input.completed ? 'CURRENT_TIMESTAMP' : null);
+    updates.push(`completed_at = ${input.completed ? 'CURRENT_TIMESTAMP' : 'NULL'}`);
   }
 
   // Always update updated_at

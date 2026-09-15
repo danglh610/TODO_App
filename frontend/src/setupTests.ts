@@ -2,6 +2,8 @@
  * Jest configuration for testing
  */
 
+import '@testing-library/jest-dom';
+
 // Mock API config module
 jest.mock('./config/api', () => ({
   API_CONFIG: {
@@ -11,4 +13,5 @@ jest.mock('./config/api', () => ({
 }));
 
 // Mock fetch
-global.fetch = jest.fn();
+// @ts-expect-error - Jest mock
+globalThis.fetch = jest.fn();

@@ -24,7 +24,7 @@ import type {
  */
 function toServiceResult<T>(
   success: boolean,
-  data?: T,
+  data: T | undefined,
   error?: string
 ): ServiceResult<T> {
   return { success, data, error };
@@ -38,10 +38,10 @@ function toPaginatedResult<T>(
 ): PaginatedResult<T> {
   return {
     success: response.success,
-    data: response.data,
-    total: response.total,
-    page: response.page,
-    totalPages: response.total_pages,
+    data: response.data || [],
+    total: response.total || 0,
+    page: response.page || 1,
+    totalPages: response.total_pages || 1,
   };
 }
 
@@ -90,20 +90,20 @@ export const dutyService = {
     try {
       const response = await apiClient.get<ApiResponse<Duty>>(`/duties/${id}`);
       if (response.success && response.data) {
-        return toServiceResult(true, response.data);
+        return { success: true, data: response.data };
       }
-      return toServiceResult(false, undefined, response.message || 'Duty not found');
+      return { success: false, data: undefined, error: response.message || 'Duty not found' };
     } catch (error) {
       if (error instanceof ApiError) {
         if (error.status === 404) {
-          return toServiceResult(false, undefined, `Duty with ID ${id} not found`);
+          return { success: false, data: undefined, error: `Duty with ID ${id} not found` };
         }
-        return toServiceResult(false, undefined, error.message);
+        return { success: false, data: undefined, error: error.message };
       }
       if (error instanceof NetworkError) {
-        return toServiceResult(false, undefined, error.message);
+        return { success: false, data: undefined, error: error.message };
       }
-      return toServiceResult(false, undefined, 'An unexpected error occurred');
+      return { success: false, data: undefined, error: 'An unexpected error occurred' };
     }
   },
 
@@ -121,22 +121,22 @@ export const dutyService = {
       // Validate input
       const validationError = validateCreateInput(input);
       if (validationError) {
-        return toServiceResult(false, undefined, validationError);
+        return { success: false, data: undefined, error: validationError };
       }
 
       const response = await apiClient.post<ApiResponse<Duty>>('/duties', input);
       if (response.success && response.data) {
-        return toServiceResult(true, response.data);
+        return { success: true, data: response.data };
       }
-      return toServiceResult(false, undefined, response.message || 'Failed to create duty');
+      return { success: false, data: undefined, error: response.message || 'Failed to create duty' };
     } catch (error) {
       if (error instanceof ApiError) {
-        return toServiceResult(false, undefined, error.message);
+        return { success: false, data: undefined, error: error.message };
       }
       if (error instanceof NetworkError) {
-        return toServiceResult(false, undefined, error.message);
+        return { success: false, data: undefined, error: error.message };
       }
-      return toServiceResult(false, undefined, 'An unexpected error occurred');
+      return { success: false, data: undefined, error: 'An unexpected error occurred' };
     }
   },
 
@@ -155,25 +155,25 @@ export const dutyService = {
       // Validate input
       const validationError = validateUpdateInput(input);
       if (validationError) {
-        return toServiceResult(false, undefined, validationError);
+        return { success: false, data: undefined, error: validationError };
       }
 
       const response = await apiClient.put<ApiResponse<Duty>>(`/duties/${id}`, input);
       if (response.success && response.data) {
-        return toServiceResult(true, response.data);
+        return { success: true, data: response.data };
       }
-      return toServiceResult(false, undefined, response.message || 'Failed to update duty');
+      return { success: false, data: undefined, error: response.message || 'Failed to update duty' };
     } catch (error) {
       if (error instanceof ApiError) {
         if (error.status === 404) {
-          return toServiceResult(false, undefined, `Duty with ID ${id} not found`);
+          return { success: false, data: undefined, error: `Duty with ID ${id} not found` };
         }
-        return toServiceResult(false, undefined, error.message);
+        return { success: false, data: undefined, error: error.message };
       }
       if (error instanceof NetworkError) {
-        return toServiceResult(false, undefined, error.message);
+        return { success: false, data: undefined, error: error.message };
       }
-      return toServiceResult(false, undefined, 'An unexpected error occurred');
+      return { success: false, data: undefined, error: 'An unexpected error occurred' };
     }
   },
 
@@ -190,20 +190,20 @@ export const dutyService = {
     try {
       const response = await apiClient.delete<ApiResponse<null>>(`/duties/${id}`);
       if (response.success) {
-        return toServiceResult(true, null);
+        return { success: true, data: null };
       }
-      return toServiceResult(false, undefined, response.message || 'Failed to delete duty');
+      return { success: false, data: null, error: response.message || 'Failed to delete duty' };
     } catch (error) {
       if (error instanceof ApiError) {
         if (error.status === 404) {
-          return toServiceResult(false, undefined, `Duty with ID ${id} not found`);
+          return { success: false, data: null, error: `Duty with ID ${id} not found` };
         }
-        return toServiceResult(false, undefined, error.message);
+        return { success: false, data: null, error: error.message };
       }
       if (error instanceof NetworkError) {
-        return toServiceResult(false, undefined, error.message);
+        return { success: false, data: null, error: error.message };
       }
-      return toServiceResult(false, undefined, 'An unexpected error occurred');
+      return { success: false, data: null, error: 'An unexpected error occurred' };
     }
   },
 };

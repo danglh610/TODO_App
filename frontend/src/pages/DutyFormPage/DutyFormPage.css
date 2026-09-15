@@ -1,0 +1,224 @@
+/**
+ * DutyFormPage Styles
+ * Flat form matching DutyList design
+ */
+
+.duty-form-page {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px 24px;
+  min-height: 100vh;
+  background: #f5f7fa;
+  box-sizing: border-box;
+}
+
+.duty-form-page__loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.duty-form-page__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding: 20px 24px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.duty-form-page__header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.duty-form-page__back-btn {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.duty-form-page__back-btn:hover {
+  background: #f3f4f6;
+}
+
+.duty-form-page__title {
+  margin: 0 !important;
+  font-size: 1.5rem !important;
+  font-weight: 600 !important;
+  color: #1f2937 !important;
+}
+
+.duty-form-page__card {
+  border-radius: 12px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+}
+
+.duty-form-page__card > .ant-card-body {
+  padding: 24px !important;
+}
+
+.duty-form-page__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.duty-form-page__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.duty-form-page__field-error {
+  font-size: 0.75rem;
+  color: #ef4444;
+  text-align: left;
+  margin-top: -4px;
+}
+
+.duty-form-page__api-error {
+  font-size: 0.875rem;
+  color: #ef4444;
+  text-align: center;
+  padding: 12px;
+  background: #fef2f2;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.duty-form-page__label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #6b7280;
+  text-align: left;
+}
+
+.duty-form-page__required {
+  color: #ef4444;
+  margin-left: 2px;
+}
+
+.duty-form-page__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.duty-form-page__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+  margin-top: 8px;
+}
+
+.duty-form-page__actions .ant-btn-primary {
+  min-width: 100px;
+  height: 40px;
+  padding: 0 20px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.duty-form-page__actions .ant-btn:not(.ant-btn-primary) {
+  min-width: 80px;
+  height: 40px;
+  border-radius: 8px;
+}
+
+/* Form field styling */
+.duty-form-page .ant-input,
+.duty-form-page .ant-picker,
+.duty-form-page .ant-select-selector {
+  border-radius: 8px !important;
+  border-color: #d1d5db !important;
+  transition: all 0.2s ease !important;
+}
+
+.duty-form-page .ant-input:hover,
+.duty-form-page .ant-picker:hover,
+.duty-form-page .ant-select-selector:hover {
+  border-color: #3b82f6 !important;
+}
+
+.duty-form-page .ant-input:focus,
+.duty-form-page .ant-picker-focused,
+.duty-form-page .ant-select-focused .ant-select-selector {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+.duty-form-page .ant-input-textarea textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Responsive - keep 2 columns on mobile too */
+@media (max-width: 640px) {
+  .duty-form-page {
+    padding: 16px 12px;
+  }
+
+  .duty-form-page__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 20px;
+  }
+
+  .duty-form-page__header-left {
+    width: 100%;
+  }
+
+  .duty-form-page__back-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .duty-form-page__row {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .duty-form-page__card > .ant-card-body {
+    padding: 16px !important;
+  }
+
+  .duty-form-page__actions {
+    flex-direction: row;
+  }
+
+  .duty-form-page__actions .ant-btn {
+    flex: 1;
+  }
+}
+
+@media (max-width: 420px) {
+  .duty-form-page__row {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .duty-form-page__actions {
+    flex-direction: column-reverse;
+  }
+
+  .duty-form-page__actions .ant-btn {
+    width: 100%;
+  }
+}

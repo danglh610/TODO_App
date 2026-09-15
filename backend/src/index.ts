@@ -3,6 +3,7 @@
 
 import { config } from 'dotenv';
 import express from 'express';
+import cors from 'cors';
 import { testConnection, closePool } from './db/connection';
 import { runMigrations } from './db/migrate';
 import { dutiesRouter } from './routes/index';
@@ -14,9 +15,22 @@ config();
 // Initialize Express app
 const app = express();
 const PORT = process.env.PORT || 3000;
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
 // Middleware
 app.use(express.json());
+
+// CORS Configuration - Allow frontend to access API
+app.use(cors({
+  origin: [
+    FRONTEND_URL,
+    'http://localhost:5173',  // Vite default
+    'http://localhost:4173',  // Vite preview
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+}));
 
 // Health check endpoint
 app.get('/health', async (_req, res) => {

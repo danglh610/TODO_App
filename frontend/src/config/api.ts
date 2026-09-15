@@ -3,22 +3,21 @@
  * Centralized configuration for API client
  */
 
-// Default API base URL
-const DEFAULT_API_BASE_URL = 'http://localhost:3000/api';
+// Default API base URL - use relative path for Vite proxy
+const DEFAULT_API_BASE_URL = '/api';
 
 /**
  * Get API base URL from environment
- * Supports both Vite (browser) and Node.js (test) environments
+ * Only uses Vite environment variables (browser-safe)
  */
 function getApiBaseUrl(): string {
-  // Try Vite environment variable first (browser)
+  // Vite environment variable (browser-safe)
   if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) {
-    return import.meta.env.VITE_API_BASE_URL;
+    return import.meta.env.VITE_API_BASE_URL as string;
   }
   
-  // Fallback to environment variable (Node.js)
-  const envUrl = process.env.VITE_API_BASE_URL || process.env.REACT_APP_API_URL;
-  return envUrl || DEFAULT_API_BASE_URL;
+  // Default to relative path (works with Vite proxy)
+  return DEFAULT_API_BASE_URL;
 }
 
 export const API_CONFIG = {

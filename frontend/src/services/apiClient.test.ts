@@ -10,7 +10,8 @@ import { ApiError, NetworkError, apiClient } from '../services/apiClient';
 
 const mockFetch = jest.fn();
 
-global.fetch = mockFetch;
+// @ts-expect-error - Jest mock
+globalThis.fetch = mockFetch;
 
 describe('ApiClient', () => {
   beforeEach(() => {

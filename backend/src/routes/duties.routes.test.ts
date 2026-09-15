@@ -274,11 +274,11 @@ describe('DutiesRoutes', () => {
   // =========================================
   describe('POST /', () => {
     it('should create duty with valid data', async () => {
-      const createdDuty = { id: 1, title: 'New Task', status: 'pending' };
+      const createdDuty = { id: 1, title: 'New Task', status: 'pending', priority: 'medium' };
       mockCreateDuty.mockResolvedValueOnce(createdDuty);
 
       const { req, res } = createMocks();
-      req.body = { title: 'New Task' };
+      req.body = { title: 'New Task', status: 'pending', priority: 'medium' };
 
       await callRoute('post', '/', req, res);
 
@@ -326,6 +326,82 @@ describe('DutiesRoutes', () => {
       expect(res.status).toHaveBeenCalledWith(400);
     });
 
+    it('should return 400 when status is missing', async () => {
+      const { req, res } = createMocks();
+      req.body = { title: 'Task', status: '' };
+
+      await callRoute('post', '/', req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          message: expect.stringContaining('Status is required')
+        })
+      );
+    });
+
+    it('should return 400 when priority is missing', async () => {
+      const { req, res } = createMocks();
+      req.body = { title: 'Task', status: 'pending', priority: '' };
+
+      await callRoute('post', '/', req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          message: expect.stringContaining('Priority is required')
+        })
+      );
+    });
+
+    it('should return 400 when end_date is before start_date', async () => {
+      const { req, res } = createMocks();
+      req.body = {
+        title: 'Task',
+        status: 'pending',
+        priority: 'medium',
+        start_date: '2024-12-31',
+        end_date: '2024-01-01'
+      };
+
+      await callRoute('post', '/', req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          message: expect.stringContaining('End date must be on or after start date')
+        })
+      );
+    });
+
+    it('should accept valid duty with all fields', async () => {
+      const createdDuty = {
+        id: 1,
+        title: 'Complete Task',
+        status: 'completed',
+        priority: 'high',
+        start_date: '2024-01-01',
+        end_date: '2024-12-31'
+      };
+      mockCreateDuty.mockResolvedValueOnce(createdDuty);
+
+      const { req, res } = createMocks();
+      req.body = {
+        title: 'Complete Task',
+        status: 'completed',
+        priority: 'high',
+        start_date: '2024-01-01',
+        end_date: '2024-12-31'
+      };
+
+      await callRoute('post', '/', req, res);
+
+      expect(res.status).toHaveBeenCalledWith(201);
+    });
+
     it('should return 400 for invalid date format', async () => {
       const { req, res } = createMocks();
       req.body = { title: 'Task', start_date: '2024/01/01' };
@@ -348,7 +424,7 @@ describe('DutiesRoutes', () => {
       mockCreateDuty.mockRejectedValueOnce(new Error('Database connection failed'));
 
       const { req, res } = createMocks();
-      req.body = { title: 'New Task' };
+      req.body = { title: 'New Task', status: 'pending', priority: 'medium' };
 
       await callRoute('post', '/', req, res);
 
@@ -362,11 +438,11 @@ describe('DutiesRoutes', () => {
     });
 
     it('should trim whitespace from title', async () => {
-      const createdDuty = { id: 1, title: 'Task' };
+      const createdDuty = { id: 1, title: 'Task', status: 'pending', priority: 'medium' };
       mockCreateDuty.mockResolvedValueOnce(createdDuty);
 
       const { req, res } = createMocks();
-      req.body = { title: '  Task  ' };
+      req.body = { title: '  Task  ', status: 'pending', priority: 'medium' };
 
       await callRoute('post', '/', req, res);
 
@@ -437,6 +513,57 @@ describe('DutiesRoutes', () => {
       await callRoute('put', '/:id', req, res);
 
       expect(res.status).toHaveBeenCalledWith(400);
+    });
+
+    it('should return 400 when status is empty string', async () => {
+      const { req, res } = createMocks();
+      req.params = { id: '1' };
+      req.body = { status: '' };
+
+      await callRoute('put', '/:id', req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          message: expect.stringContaining('Status is required')
+        })
+      );
+    });
+
+    it('should return 400 when priority is empty string', async () => {
+      const { req, res } = createMocks();
+      req.params = { id: '1' };
+      req.body = { priority: '' };
+
+      await callRoute('put', '/:id', req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          message: expect.stringContaining('Priority is required')
+        })
+      );
+    });
+
+    it('should return 400 when end_date is before start_date on update', async () => {
+      const { req, res } = createMocks();
+      req.params = { id: '1' };
+      req.body = {
+        start_date: '2024-12-31',
+        end_date: '2024-01-01'
+      };
+
+      await callRoute('put', '/:id', req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          message: expect.stringContaining('End date must be on or after start date')
+        })
+      );
     });
 
     it('should return 400 for invalid date format', async () => {

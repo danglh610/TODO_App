@@ -440,8 +440,8 @@ describe('DutiesService', () => {
 
       expect(result).toEqual(updated);
       expect(mockQueryFn).toHaveBeenCalledWith(
-        expect.stringContaining('completed_at = $'),
-        expect.arrayContaining([true, 'CURRENT_TIMESTAMP'])
+        expect.stringContaining('completed_at = CURRENT_TIMESTAMP'),
+        expect.arrayContaining([true])
       );
     });
 
@@ -454,8 +454,8 @@ describe('DutiesService', () => {
 
       expect(result).toEqual(updated);
       expect(mockQueryFn).toHaveBeenCalledWith(
-        expect.stringContaining('completed_at = $'),
-        expect.arrayContaining([false, null])
+        expect.stringContaining('completed_at = NULL'),
+        expect.arrayContaining([false])
       );
     });
 
